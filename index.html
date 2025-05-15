@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
     <title>Pink Trombone</title>
     <script src="./pink-trombone.min.js" type="module"></script>
     <!-- <script src="./script/component.js" type="module"></script> -->
@@ -54,8 +55,8 @@
       /* Styles for the main pink-trombone custom element */
       pink-trombone {
         display: block;
-        width: clamp(300px, 90vw, 700px);
-        height: clamp(400px, 70vh, 600px);
+        width: clamp(200px, 95vw, 700px);
+        height: clamp(280px, 75vh, 600px);
         margin: 0 auto;
         box-shadow: 0 0 15px rgba(0,0,0,0.15);
         border-radius: 8px;
@@ -74,11 +75,6 @@
   </head>
 
   <body>
-    <div class="controls-container">
-      <select id="microphoneSelect" hidden>
-        <optgroup id="microphoneOptGroup" label="select microphone"></optgroup>
-      </select>
-    </div>
 
     <pink-trombone></pink-trombone>
 

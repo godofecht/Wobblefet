@@ -14,18 +14,20 @@ class TractUI {
 
     this._canvases = {};
     this._contexts = {};
+    this._resizeObserver = null; // For storing ResizeObserver instance
 
     ["tract", "background"].forEach((id, index) => {
       const canvas = document.createElement("canvas");
       canvas.id = id;
 
       canvas.style.position = "absolute";
-      canvas.height = 500;
-      canvas.width = 600;
       canvas.style.backgroundColor = "transparent";
       canvas.style.margin = 0;
       canvas.style.padding = 0;
       canvas.style.zIndex = 1 - index;
+      if (id === "tract") { // Apply touch-action only to the interactive canvas
+        canvas.style.touchAction = "none";
+      }
 
       this._canvases[id] = canvas;
       this._contexts[id] = canvas.getContext("2d");
@@ -56,6 +58,9 @@ class TractUI {
     this._parameters = {};
 
     this._touchConstrictionIndices = [];
+
+    // Setup ResizeObserver to call _resize on container resize
+    this._setupResizeObserver();
 
     // AnimationFrame
     this._container.addEventListener("animationFrame", (event) => {
@@ -140,6 +145,29 @@ class TractUI {
     this._canvases.tract.addEventListener("didRemoveConstriction", (event) => {
       this._touchConstrictionIndices[event.detail.touchIdentifier] = undefined;
     });
+  }
+
+  _debounce(func, delay) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+  }
+
+  _setupResizeObserver() {
+    const debouncedResizeCaller = this._debounce(() => {
+        requestAnimationFrame(() => {
+            // console.log("TractUI: rAF triggered _resize call");
+            this._resize();
+        });
+    }, 250); // Debounce time, e.g., 250ms
+
+    this._resizeObserver = new ResizeObserver(entries => {
+        // console.log("TractUI: ResizeObserver fired, calling debounced rAF wrapper");
+        debouncedResizeCaller();
+    });
+    this._resizeObserver.observe(this._container);
   }
 
   get node() {

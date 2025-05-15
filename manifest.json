@@ -1,0 +1,20 @@
+{
+  "short_name": "PinkTrombone",
+  "name": "Pink Trombone - Bare-handed Speech Synthesis",
+  "icons": [
+    {
+      "src": "images/pink_trombone_icon_192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "images/pink_trombone_icon_512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#E91E63",
+  "background_color": "#FFFFFF"
+} 

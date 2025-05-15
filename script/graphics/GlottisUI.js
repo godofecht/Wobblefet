@@ -33,7 +33,8 @@ class GlottisUI {
         this._padElement.id = this._container.id + "-pad";
         this._padElement.style.width = "100%";
         this._padElement.style.height = "100%";
-        this._padElement.style.position = "relative"; // Or static, XYPad might handle its canvas
+        this._padElement.style.position = "relative"; 
+        this._padElement.style.touchAction = "none"; // Prevent default touch actions like scrolling
         this._container.appendChild(this._padElement);
 
         // X-axis Label (Pitch) - positioned relative to _container
@@ -52,10 +53,10 @@ class GlottisUI {
         const yLabel = document.createElement("div");
         yLabel.innerText = "Breathiness (High \u2193 Low)"; // Updated text & arrow for inverted logic
         yLabel.style.position = "absolute";
-        yLabel.style.top = "calc(100% - 35px)"; // Moved further down (bottom anchored with offset)
-        yLabel.style.left = "15px"; 
-        yLabel.style.transform = "translateY(-50%) rotate(-90deg)";
-        yLabel.style.transformOrigin = "center left"; // Adjusted for better positioning after rotation
+        yLabel.style.top = "50%"; // Vertically center the label
+        yLabel.style.left = "15px"; // Position center of rotated label 15px from left edge
+        yLabel.style.transform = "rotate(-90deg)"; // Rotate the label
+        // yLabel.style.transformOrigin = "center left"; // Removed, default 'center' is better here
         yLabel.style.color = "#000000";
         yLabel.style.fontSize = "12px";
         yLabel.style.whiteSpace = "nowrap";
@@ -63,21 +64,63 @@ class GlottisUI {
 
         this._xyPadInstance = null;
         this._isPadInitialized = false;
+        this._resizeObserver = null; // For storing ResizeObserver instance
+        this._resizeDebounceTimer = null; // For debouncing resize events
 
         const mutationObserver = new MutationObserver((mutationsList, observer) => {
             if (document.contains(this._container) && this._container.offsetWidth > 0 && this._container.offsetHeight > 0 && !this._isPadInitialized) {
                 this._initXYPad();
                 this._isPadInitialized = true;
-                observer.disconnect();
+                observer.disconnect(); // Disconnect mutation observer after first init
             }
         });
         mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+        // Setup ResizeObserver to re-initialize XYPad on container resize
+        this._setupResizeObserver();
+    }
+
+    _debounce(func, delay) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    _handleResize() {
+        // Ensure the pad was initialized and container is valid
+        if (this._isPadInitialized && document.contains(this._container) && this._container.offsetWidth > 0 && this._container.offsetHeight > 0) {
+            // console.log("GlottisUI: Container resized. Re-initializing XYPad.");
+            this._initXYPad();
+        }
+    }
+
+    _setupResizeObserver() {
+        const debouncedResizeCaller = this._debounce(() => {
+            requestAnimationFrame(() => {
+                // Logic from _handleResize, now inside rAF
+                if (this._isPadInitialized && document.contains(this._container) && 
+                    this._container.offsetWidth > 0 && this._container.offsetHeight > 0) {
+                    // console.log("GlottisUI: rAF triggered _initXYPad call");
+                    this._initXYPad();
+                }
+            });
+        }, 250); // Debounce time, e.g., 250ms
+
+        this._resizeObserver = new ResizeObserver(entries => {
+            // console.log("GlottisUI: ResizeObserver fired, calling debounced rAF wrapper");
+            debouncedResizeCaller();
+        });
+        this._resizeObserver.observe(this._container);
     }
 
     _initXYPad() {
-        if (this._xyPadInstance) {
-            this._xyPadInstance.destroy(); // xypadjs has a destroy method
+        if (this._xyPadInstance && typeof this._xyPadInstance.destroy === 'function') {
+            this._xyPadInstance.destroy(); // Attempt to gracefully destroy the old instance
         }
+        // Force clear the container for the XYPad to remove any old canvases or elements
+        this._padElement.innerHTML = ''; 
 
         const libXRange = { min: -100, max: 100 }; // xypadjs default
         const libYRange = { min: -100, max: 100 }; // xypadjs default
