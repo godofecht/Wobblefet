@@ -10,6 +10,7 @@ class TractUI {
     this._container.style.margin = 0;
     this._container.style.padding = 0;
     this._container.style.position = 'relative'; // Ensure container can anchor absolute children
+    this._container.style.zIndex = 2; // Ensure TractUI is above other elements
 
     this._canvases = {};
     this._contexts = {};
@@ -230,7 +231,7 @@ class TractUI {
 
     this._context.beginPath();
     this._context.lineWidth = 2;
-    this._context.strokeStyle = this._context.fillStyle = "pink";
+    this._context.strokeStyle = this._context.fillStyle = "black";
     this._moveTo(1, 0);
 
     for (let index = 1; index < this._processor.tract.length; index++)
@@ -248,7 +249,7 @@ class TractUI {
 
     this._context.beginPath();
     this._context.lineWidth = 2;
-    this._context.strokeStyle = this._context.fillStyle = "pink";
+    this._context.strokeStyle = this._context.fillStyle = "black";
     this._moveTo(this._processor.tract.nose.start, -this._processor.tract.nose.offset);
 
     for (let index = 1; index < this._processor.tract.nose.length; index++)
@@ -265,7 +266,7 @@ class TractUI {
 
     this._context.beginPath();
     this._context.lineWidth = 2;
-    this._context.strokeStyle = this._context.fillStyle = "pink";
+    this._context.strokeStyle = this._context.fillStyle = "black";
     this._moveTo(this._processor.tract.nose.start - 2, 0);
     this._lineTo(this._processor.tract.nose.start, -this._processor.tract.nose.offset);
     this._lineTo(this._processor.tract.nose.start + velumAngle, -this._processor.tract.nose.offset);
@@ -291,7 +292,7 @@ class TractUI {
 
     this._context.beginPath();
     this._context.lineWidth = 5;
-    this._context.strokeStyle = "#C070C6";
+    this._context.strokeStyle = "#E0E0E0";
     this._context.lineJoin = this._context.lineCap = "round";
     this._moveTo(1, this._processor.tract.diameter[0]);
     for (let index = 2; index < this._processor.tract.length; index++)
@@ -312,7 +313,7 @@ class TractUI {
 
     this._context.beginPath();
     this._context.lineWidth = 5;
-    this._context.strokeStyle = "#C070C6";
+    this._context.strokeStyle = "#E0E0E0";
     this._context.lineJoin = "round";
 
     this._moveTo(this._processor.tract.nose.start, -this._processor.tract.nose.offset);
@@ -336,7 +337,7 @@ class TractUI {
     this._lineTo(this._processor.tract.nose.start + velumAngle - 2, 0);
     this._context.stroke();
 
-    this._context.fillStyle = "orchid";
+    this._context.fillStyle = "#555555";
     this._context.font = "20px Arial";
     this._context.textAlign = "center";
     this._context.globalAlpha = 0.7;
@@ -367,7 +368,7 @@ class TractUI {
   }
   _drawTongueControl() {
     this._context.lineCap = this._context.lineJoin = "round";
-    this._context.strokeStyle = this._context.fillStyle = "#FFEEF5"; // palePink
+    this._context.strokeStyle = this._context.fillStyle = "#444444";
     this._context.globalAlpha = 1.0;
     this._context.beginPath();
     this._context.lineWidth = 45;
@@ -385,8 +386,8 @@ class TractUI {
     this._context.stroke();
     this._context.fill();
 
-    this._context.fillStyle = "orchid";
-    this._context.globalAlpha = 0.3;
+    this._context.fillStyle = "white";
+    this._context.globalAlpha = 0.6;
 
     [0, -4.25, -8.5, 4.25, 8.5, -6.1, 6.1, 0, 0].forEach((indexOffset, _index) => {
       const diameter =
@@ -405,18 +406,19 @@ class TractUI {
     const tongueRadius = this._getRadius(this._processor.tract.tongue.index, this._processor.tract.tongue.diameter);
 
     this._context.lineWidth = 4;
-    this._context.strokeStyle = "orchid";
-    this._context.globalAlpha = 0.7;
+    this._context.strokeStyle = "white";
+    this._context.fillStyle = "black";
+    this._context.globalAlpha = 1.0;
+
     this._context.beginPath();
     this._context.arc(this._getX(tongueAngle, tongueRadius), this._getY(tongueAngle, tongueRadius), 18, 0, 2 * Math.PI);
     this._context.stroke();
-    this._context.globalAlpha = 0.15;
     this._context.fill();
+    
     this._context.globalAlpha = 1;
-    this._context.fillStyle = "orchid";
   }
   _drawAmplitudes() {
-    this._context.strokeStyle = "orchid";
+    this._context.strokeStyle = "#AAAAAA";
     this._context.lineCap = "butt";
     this._context.globalAlpha = 0.3;
 
@@ -446,7 +448,7 @@ class TractUI {
     this._context.globalAlpha = 1;
   }
   _drawPositions() {
-    this._context.fillStyle = "orchid";
+    this._context.fillStyle = "#E0E0E0";
     this._context.font = "24px Arial";
     this._context.textAlign = "center";
     this._context.globalAlpha = 0.6;
@@ -577,11 +579,13 @@ class TractUI {
   }
 
   _getEventX(event) {
-    const x = (event.pageX - event.target.offsetLeft) * this._tract.scalar - this._tract.origin.x;
+    const rect = event.target.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * this._tract.scalar - this._tract.origin.x;
     return x;
   }
   _getEventY(event) {
-    const y = (event.pageY - event.target.offsetTop) * this._tract.scalar - this._tract.origin.y;
+    const rect = event.target.getBoundingClientRect();
+    const y = (event.clientY - rect.top) * this._tract.scalar - this._tract.origin.y;
     return y;
   }
 

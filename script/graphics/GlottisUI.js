@@ -20,11 +20,46 @@ class GlottisUI {
         this._container.id = "glottis-ui-container-" + Date.now(); // Unique ID for the container
         this._container.style.width = "100%";
         this._container.style.height = "100%";
-        this._container.style.position = "relative"; // Important for NippleJS
+        this._container.style.position = "relative"; // Important for NippleJS & label positioning
         this._container.style.boxSizing = "border-box";
-        this._container.style.backgroundColor = "#f0f0f0"; // A light background for the pad area
-        this._container.style.border = "1px solid #ccc";
+        this._container.style.backgroundColor = "#FFFFFF"; // Was #f0f0f0, now white
+        this._container.style.border = "1px solid #000000"; // Was #ccc, now black
         this._container.style.borderRadius = "4px";
+        // Removed padding from this._container to allow padElement to be full size
+        // this._container.style.padding = "25px"; 
+
+        // Create an inner element for the XYPad itself
+        this._padElement = document.createElement("div");
+        this._padElement.id = this._container.id + "-pad";
+        this._padElement.style.width = "100%";
+        this._padElement.style.height = "100%";
+        this._padElement.style.position = "relative"; // Or static, XYPad might handle its canvas
+        this._container.appendChild(this._padElement);
+
+        // X-axis Label (Pitch) - positioned relative to _container
+        const xLabel = document.createElement("div");
+        xLabel.innerText = "Pitch (Low \u2192 High)";
+        xLabel.style.position = "absolute";
+        xLabel.style.bottom = "5px"; // At the bottom of the container
+        xLabel.style.left = "50%";
+        xLabel.style.transform = "translateX(-50%)";
+        xLabel.style.color = "#000000";
+        xLabel.style.fontSize = "12px";
+        xLabel.style.whiteSpace = "nowrap";
+        this._container.appendChild(xLabel);
+
+        // Y-axis Label (Breathiness) - positioned relative to _container
+        const yLabel = document.createElement("div");
+        yLabel.innerText = "Breathiness (High \u2193 Low)"; // Updated text & arrow for inverted logic
+        yLabel.style.position = "absolute";
+        yLabel.style.top = "calc(100% - 35px)"; // Moved further down (bottom anchored with offset)
+        yLabel.style.left = "15px"; 
+        yLabel.style.transform = "translateY(-50%) rotate(-90deg)";
+        yLabel.style.transformOrigin = "center left"; // Adjusted for better positioning after rotation
+        yLabel.style.color = "#000000";
+        yLabel.style.fontSize = "12px";
+        yLabel.style.whiteSpace = "nowrap";
+        this._container.appendChild(yLabel);
 
         this._xyPadInstance = null;
         this._isPadInitialized = false;
@@ -57,10 +92,10 @@ class GlottisUI {
         const libYRange = { min: -100, max: 100 }; // xypadjs default
 
         this._xyPadInstance = new XYPad({
-            el: '#' + this._container.id, // Use the ID selector string
-            width: this._container.offsetWidth,
-            height: this._container.offsetHeight,
-            pointerColor: 'rgba(236, 72, 153, 0.9)', // Pinkish, less transparent
+            el: '#' + this._padElement.id, // Use the new padElement
+            width: this._padElement.offsetWidth, // Use padElement's dimensions
+            height: this._padElement.offsetHeight, // Use padElement's dimensions
+            pointerColor: 'rgba(0, 0, 0, 0.8)', // Was Pinkish, now black with some transparency
             xRange: libXRange,
             yRange: libYRange,
             callback: (pointer) => { // pointer object has {x, y}
@@ -70,7 +105,7 @@ class GlottisUI {
                 const freqInterpolation = normalizedX;
                 const frequency = this._frequency_range.min + ((this._frequency_range.max - this._frequency_range.min) * freqInterpolation);
 
-                const tensenessInterpolation = normalizedY;
+                const tensenessInterpolation = 1.0 - normalizedY; // Inverted logic for tenseness
                 const tenseness = 1 - Math.cos(tensenessInterpolation * Math.PI * 0.5);
                 const loudness = Math.pow(tenseness, 0.25);
 
@@ -93,14 +128,12 @@ class GlottisUI {
 
     _dispatchXYPadChange(point, xRange, yRange) { 
         const normalizedX = (point.x - xRange.min) / (xRange.max - xRange.min);
-        // Ensure Y is inverted for our tenseness logic (0=bottom, 1=top)
-        // xypadjs might have Y increasing downwards on its canvas.
         const normalizedY = 1.0 - ((point.y - yRange.min) / (yRange.max - yRange.min));
 
         const freqInterpolation = normalizedX;
         const frequency = this._frequency_range.min + ((this._frequency_range.max - this._frequency_range.min) * freqInterpolation);
 
-        const tensenessInterpolation = normalizedY;
+        const tensenessInterpolation = 1.0 - normalizedY; // Inverted logic for tenseness
         const tenseness = 1 - Math.cos(tensenessInterpolation * Math.PI * 0.5);
         const loudness = Math.pow(tenseness, 0.25);
 
