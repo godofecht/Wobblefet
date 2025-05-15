@@ -72,15 +72,6 @@ class GlottisUI {
             }
         });
         mutationObserver.observe(document.body, { childList: true, subtree: true });
-
-        this._container.addEventListener("message", event => {
-            if(event.detail.type == "toggleButton") {
-                if(event.detail.parameterName == "voice") {
-                    // This was for _alwaysVoice, NippleJS doesn't use this directly
-                    // This logic might need to be re-evaluated based on how 'voice' button now works
-                }
-            }
-        });
     }
 
     _initXYPad() {
@@ -110,8 +101,8 @@ class GlottisUI {
                 const loudness = Math.pow(tenseness, 0.25);
 
                 this._dispatchParameter("frequency", frequency);
-                this._dispatchParameter("tenseness", tenseness);
-                this._dispatchParameter("loudness", loudness);
+                this._dispatchParameter("tenseness", tenseness * 10.0);
+                this._dispatchParameter("loudness", loudness * 10.0);
             }
         });
         
