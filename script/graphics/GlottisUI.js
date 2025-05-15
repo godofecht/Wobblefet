@@ -4,227 +4,124 @@
         set actual frequency range
 */
 
+import XYPad from 'xypadjs/dist/xypad.js';
+// import { Pointer } from 'xypadjs'; // If Pointer class is exported and needed for type hints
+
 Math.clamp = function(value, min = 0, max = 1) {
-    return value < min?
-        min :
-        value < max?
-            value :
-            max;
+    return value < min ? min : value < max ? value : max;
 }
 
 class GlottisUI {
     constructor() {
-        this._frequency = {
-            min : 20,
-            max : 1000,
-            get range() {
-                return (this.max - this.min);
-            },
-
-            interpolate(interpolation) {
-                return this.min + (this.range * interpolation);
-            },
-        };
-        
-        this._isActive = false;
-        this._alwaysVoice = true;
+        this._frequency_range = { min: 80, max: 600 }; // Adjusted range for typical voice
+        this._tenseness_range = { min: 0.0, max: 1.0 }; // Tenseness is 0-1
 
         this._container = document.createElement("div");
-            this._container.style.border = "solid red 1px";
-            this._container.style.backgroundColor = "pink";
-            this._container.style.borderRadius = "20px";
-        
-        this._slider = document.createElement("div");
-            this._slider.style.position = "relative";
-            this._slider.style.flex = 0;
-            this._slider.style.width = "20px";
-            this._slider.style.height = "20px";
-            this._slider.style.borderRadius = "20px";
-            this._slider.style.border = "solid red 5px";
-            this._slider.style.top = "50%";
-            this._slider.style.left = "50%";
-        this._container.appendChild(this._slider);
+        this._container.id = "glottis-ui-container-" + Date.now(); // Unique ID for the container
+        this._container.style.width = "100%";
+        this._container.style.height = "100%";
+        this._container.style.position = "relative"; // Important for NippleJS
+        this._container.style.boxSizing = "border-box";
+        this._container.style.backgroundColor = "#f0f0f0"; // A light background for the pad area
+        this._container.style.border = "1px solid #ccc";
+        this._container.style.borderRadius = "4px";
 
-        // EventListeners for setting the Parameters
-        this._container.addEventListener("mousedown", event => {
-            this._isActive = true;
-            this._eventCallback(event);
+        this._xyPadInstance = null;
+        this._isPadInitialized = false;
 
-            if(!this._alwaysVoice)
-                this._container.dispatchEvent(new CustomEvent("setParameter", {
-                    bubbles : true,
-                    detail : {
-                        parameterName : "intensity",
-                        newValue : 1,
-                        // type : "linear"
-                        // time : ?
-                    },
-                }));
-        });
-        this._container.addEventListener("mousemove", event => {
-            this._eventCallback(event);
-        });
-        this._container.addEventListener("mouseup", event => {
-            this._isActive = false;
-
-            if(this._alwaysVoice == false)
-                this._container.dispatchEvent(new CustomEvent("setParameter", {
-                    bubbles : true,
-                    detail : {
-                        parameterName : "intensity",
-                        newValue : 0,
-                        // type : "linear"
-                        // time : ?
-                    },
-                }));
-        });
-
-        this._container.addEventListener("touchstart", event => {
-            event.preventDefault();
-
-            if(!this._isActive) {
-                this._isActive = true;
-                const touch = event.changedTouches[0];
-                this._touchIdentifier = touch.identifier;
-                this._eventCallback(touch);
-
-                if(!this._alwaysVoice)
-                    this._container.dispatchEvent(new CustomEvent("setParameter", {
-                        bubbles : true,
-                        detail : {
-                            parameterName : "intensity",
-                            newValue : 1,
-                            // type : "linear"
-                            // time : ?
-                        },
-                    }));
+        const mutationObserver = new MutationObserver((mutationsList, observer) => {
+            if (document.contains(this._container) && this._container.offsetWidth > 0 && this._container.offsetHeight > 0 && !this._isPadInitialized) {
+                this._initXYPad();
+                this._isPadInitialized = true;
+                observer.disconnect();
             }
         });
-        this._container.addEventListener("touchmove", event => {
-            event.preventDefault();
-
-            const touch = Array.from(event.changedTouches).find(touch => touch.identifier == this._touchIdentifier);
-            
-            if(touch !== undefined)
-                this._eventCallback(touch);
-        });
-        this._container.addEventListener("touchend", event => {
-            event.preventDefault();
-
-            if(this._isActive &&Array.from(event.changedTouches).some(touch => touch.identifier == this._touchIdentifier)) {
-                this._isActive = false;
-                this._touchIdentifier = -1;
-            }
-
-            if(!this._alwaysVoice)
-                this._container.dispatchEvent(new CustomEvent("setParameter", {
-                    bubbles : true,
-                    detail : {
-                        parameterName : "intensity",
-                        newValue : 0,
-                        // type : "linear"
-                        // time : ?
-                    },
-                }));
-        });
+        mutationObserver.observe(document.body, { childList: true, subtree: true });
 
         this._container.addEventListener("message", event => {
             if(event.detail.type == "toggleButton") {
                 if(event.detail.parameterName == "voice") {
-                    this._alwaysVoice = event.detail.newValue == "true";
+                    // This was for _alwaysVoice, NippleJS doesn't use this directly
+                    // This logic might need to be re-evaluated based on how 'voice' button now works
                 }
             }
         });
+    }
 
+    _initXYPad() {
+        if (this._xyPadInstance) {
+            this._xyPadInstance.destroy(); // xypadjs has a destroy method
+        }
 
-        // Observe AnimationFrame
-        const mutationObserver = new MutationObserver((mutationsList, observer) => {
-            if(document.contains(this._container)) {
+        const libXRange = { min: -100, max: 100 }; // xypadjs default
+        const libYRange = { min: -100, max: 100 }; // xypadjs default
 
-                const customEvent = new CustomEvent("requestAnimationFrame", {
-                    bubbles : true,
-                });
-                this._container.dispatchEvent(customEvent);
+        this._xyPadInstance = new XYPad({
+            el: '#' + this._container.id, // Use the ID selector string
+            width: this._container.offsetWidth,
+            height: this._container.offsetHeight,
+            pointerColor: 'rgba(236, 72, 153, 0.9)', // Pinkish, less transparent
+            xRange: libXRange,
+            yRange: libYRange,
+            callback: (pointer) => { // pointer object has {x, y}
+                const normalizedX = (pointer.x - libXRange.min) / (libXRange.max - libXRange.min);
+                const normalizedY = 1.0 - ((pointer.y - libYRange.min) / (libYRange.max - libYRange.min));
 
-                observer.disconnect();
+                const freqInterpolation = normalizedX;
+                const frequency = this._frequency_range.min + ((this._frequency_range.max - this._frequency_range.min) * freqInterpolation);
+
+                const tensenessInterpolation = normalizedY;
+                const tenseness = 1 - Math.cos(tensenessInterpolation * Math.PI * 0.5);
+                const loudness = Math.pow(tenseness, 0.25);
+
+                this._dispatchParameter("frequency", frequency);
+                this._dispatchParameter("tenseness", tenseness);
+                this._dispatchParameter("loudness", loudness);
             }
         });
-        mutationObserver.observe(document.body, {
-            subtree : true,
-            childList : true,
-        });
+        
+        const initialX = libXRange.min + (libXRange.max - libXRange.min) / 2;
+        const initialY = libYRange.min + (libYRange.max - libYRange.min) / 2;
+        if (this._xyPadInstance && typeof this._xyPadInstance.movePointerTo === 'function') {
+            this._xyPadInstance.movePointerTo(initialX, initialY);
+            // Manually trigger callback for initial position as movePointerTo might not.
+            this._dispatchXYPadChange({ x: initialX, y: initialY }, libXRange, libYRange);
+        } else {
+            console.error("GlottisUI: XYPad instance not available or movePointerTo is not a function for initial setup.");
+        }
+    }
 
+    _dispatchXYPadChange(point, xRange, yRange) { 
+        const normalizedX = (point.x - xRange.min) / (xRange.max - xRange.min);
+        // Ensure Y is inverted for our tenseness logic (0=bottom, 1=top)
+        // xypadjs might have Y increasing downwards on its canvas.
+        const normalizedY = 1.0 - ((point.y - yRange.min) / (yRange.max - yRange.min));
 
-        // AnimationFrame EventListener
-        this._container.addEventListener("animationFrame", event => {
-            ["frequency", "tenseness"].forEach(parameterName => {
-                const customEvent = new CustomEvent("getParameter", {
-                    bubbles : true,
-                    detail : {
-                        parameterName : parameterName,
-                        render : true,
-                    },
-                });
-                event.target.dispatchEvent(customEvent);
-            });
-        });
+        const freqInterpolation = normalizedX;
+        const frequency = this._frequency_range.min + ((this._frequency_range.max - this._frequency_range.min) * freqInterpolation);
 
+        const tensenessInterpolation = normalizedY;
+        const tenseness = 1 - Math.cos(tensenessInterpolation * Math.PI * 0.5);
+        const loudness = Math.pow(tenseness, 0.25);
 
-        // EventListeners for Getting Parameters
-        this._container.addEventListener("didGetParameter", event => {
-            if(event.detail.render == true) {
-                const parameterName = event.detail.parameterName;
-                const value = event.detail.value;
+        this._dispatchParameter("frequency", frequency);
+        this._dispatchParameter("tenseness", tenseness);
+        this._dispatchParameter("loudness", loudness);
+    }
 
-                if(["frequency", "tenseness"].includes(parameterName)) {
-                    var interpolation;
-
-                    if(parameterName == "frequency") {
-                        interpolation = Math.clamp(((value-this._frequency.min)/this._frequency.range));
-                        this._slider.style.left = interpolation * this._container.offsetWidth - (this._slider.offsetWidth/2);
-                    }
-                    else {
-                        interpolation = 1 - ((Math.acos(1 - value) / (Math.PI*0.5)));
-                        this._slider.style.top = interpolation * this._container.offsetHeight - (this._slider.offsetHeight/2);
-                    }
-                }    
+    _dispatchParameter(name, value) {
+        this._container.dispatchEvent(new CustomEvent("setParameter", {
+            bubbles: true,
+            detail: {
+                parameterName: name,
+                newValue: value,
             }
-            
-        });
+        }));
     }
 
     get node() {
         return this._container;
     }
-
-    _eventCallback(event) {
-        if(this._isActive) {
-            const interpolation = {
-                vertical : Math.clamp((event.pageY - this._container.offsetTop)/this._container.offsetHeight, 0, 0.99),
-                horizontal : Math.clamp((event.pageX - this._container.offsetLeft)/this._container.offsetWidth, 0, 0.99),
-            };
-
-            const frequency = this._frequency.interpolate(interpolation.horizontal);
-            const tenseness = 1 - Math.cos((1 - interpolation.vertical) * Math.PI * 0.5);
-            const loudness = Math.pow(tenseness, 0.25);
-
-            const parameters = {
-                frequency : frequency,
-                tenseness : tenseness,
-                loudness : loudness,
-            };
-            
-            Object.keys(parameters).forEach(parameterName => {
-                this._container.dispatchEvent(new CustomEvent("setParameter", {
-                    bubbles : true,
-                    detail : {
-                        parameterName : parameterName,
-                        newValue : parameters[parameterName],
-                    },
-                }));
-            });
-        }
-    }
 }
 
-export default GlottisUI
+export default GlottisUI;

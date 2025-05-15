@@ -18,19 +18,22 @@ class PinkTromboneUI {
             this._container.style.width = "100%";
 
             this._container.style.display = "grid";
-                this._container.style.gridTemplateRows = "auto 200px 100px";
-                this._container.style.gridTemplateColumns = "auto 100px";
-                this._container.style.gridRowGap = "5px";
+                this._container.style.gridTemplateRows = "1fr 150px";
+                this._container.style.gridTemplateColumns = "1fr 120px";
+                this._container.style.gridGap = "10px";
 
             this._container.appendChild(this._tractUI.node);
                 this._tractUI.node.id = "tractUI";
                 this._tractUI.node.style.gridColumn = "1 / span 2";
-                this._tractUI.node.style.gridRow = "1 / span 2";
+                this._tractUI.node.style.gridRow = "1";
+                this._tractUI.node.style.width = "100%";
+                this._tractUI.node.style.height = "100%";
+                this._tractUI.node.style.overflow = "hidden";
 
             this._container.appendChild(this._glottisUI.node);
                 this._glottisUI.node.id = "glottisUI";
-                this._glottisUI.node.style.gridColumn = "1 / span 2"
-                this._glottisUI.node.style.gridRow = "3";
+                this._glottisUI.node.style.gridColumn = "1";
+                this._glottisUI.node.style.gridRow = "2";
             
             this._container.appendChild(this._buttonsUI.node);
                 this._buttonsUI.node.id = "buttonsUI";

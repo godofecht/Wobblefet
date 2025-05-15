@@ -9,6 +9,7 @@ class TractUI {
     this._container = document.createElement("div");
     this._container.style.margin = 0;
     this._container.style.padding = 0;
+    this._container.style.position = 'relative'; // Ensure container can anchor absolute children
 
     this._canvases = {};
     this._contexts = {};
@@ -34,21 +35,21 @@ class TractUI {
     this._canvas = this._canvases.tract;
     this._context = this._contexts.tract;
 
-    this._tract = {
-      origin: {
-        x: 340,
-        y: 460,
-      },
-
+    this._tractDefaults = {
+      origin: { x: 340, y: 460 },
       radius: 298,
       scale: 60,
+      angle: { scale: 0.64, offset: -0.25 },
+    };
+    this.initialCanvasWidth = 600;
+    this.initialCanvasHeight = 500;
 
-      scalar: 1,
-
-      angle: {
-        scale: 0.64,
-        offset: -0.25,
-      },
+    this._tract = {
+      origin: { ...this._tractDefaults.origin },
+      radius: this._tractDefaults.radius,
+      scale: this._tractDefaults.scale,
+      scalar: 1, // Will be updated in _resize
+      angle: { ...this._tractDefaults.angle },
     };
     this._processor = null;
     this._parameters = {};
@@ -152,14 +153,66 @@ class TractUI {
   }
 
   _resize() {
-    this._tract.scalar = this._canvases.tract.width / this._canvases.tract.offsetWidth;
-    this._resizeCanvases();
+    const containerWidth = this._container.offsetWidth;
+    const containerHeight = this._container.offsetHeight;
+
+    if (containerWidth === 0 || containerHeight === 0) {
+      return;
+    }
+
+    const initialAspectRatio = this.initialCanvasWidth / this.initialCanvasHeight;
+
+    let targetWidth = containerWidth;
+    let targetHeight = targetWidth / initialAspectRatio;
+
+    if (targetHeight > containerHeight) {
+      targetHeight = containerHeight;
+      targetWidth = targetHeight * initialAspectRatio;
+    }
+
+    // Ensure targetWidth and targetHeight are integers for canvas dimensions
+    targetWidth = Math.floor(targetWidth);
+    targetHeight = Math.floor(targetHeight);
+    
+    if (targetWidth <= 0 || targetHeight <= 0) {
+        // Avoid attempting to resize to zero or negative dimensions
+        return;
+    }
+
+    this._resizeCanvases(targetWidth, targetHeight, containerWidth, containerHeight);
+
+    const drawingScaleFactor = targetWidth / this.initialCanvasWidth;
+
+    this._tract.origin.x = this._tractDefaults.origin.x * drawingScaleFactor;
+    this._tract.origin.y = this._tractDefaults.origin.y * drawingScaleFactor;
+    this._tract.radius = this._tractDefaults.radius * drawingScaleFactor;
+    this._tract.scale = this._tractDefaults.scale * drawingScaleFactor;
+    // this._tract.angle remains as defined in _tractDefaults
+
+    if (this._canvases.tract.offsetWidth > 0) {
+      this._tract.scalar = this._canvases.tract.width / this._canvases.tract.offsetWidth;
+    } else {
+      this._tract.scalar = 1; 
+    }
+    
+    // After resizing, if processor is available, redraw.
+    if (this._processor) {
+        this._drawTract();
+    }
   }
 
-  _resizeCanvases() {
+  _resizeCanvases(targetCanvasWidth, targetCanvasHeight, containerWidth, containerHeight) {
     for (let id in this._canvases) {
-      //this._canvases[id].style.width = this._container.offsetWidth;
-      this._canvases[id].style.height = this._container.offsetHeight;
+      const canvas = this._canvases[id];
+      
+      canvas.width = targetCanvasWidth;
+      canvas.height = targetCanvasHeight;
+
+      canvas.style.width = targetCanvasWidth + "px";
+      canvas.style.height = targetCanvasHeight + "px";
+
+      canvas.style.left = (containerWidth - targetCanvasWidth) / 2 + "px";
+      canvas.style.top = (containerHeight - targetCanvasHeight) / 2 + "px";
     }
   }
 

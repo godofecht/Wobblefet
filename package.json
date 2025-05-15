@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "build": "rollup -c rollup.config.js",
-    "dev": "http-server -p 8001"
+    "build:force-clean": "rm -f pink-trombone.min.js pink-trombone-worklet-processor.min.js && rollup -c rollup.config.js",
+    "serve:python": "python3 -m http.server 8002",
+    "dev:original": "rollup -c rollup.config.js --watch & http-server ./ -p 8001 -o",
+    "dev": "npm run build:force-clean && npm run serve:python"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +19,7 @@
     "http-server": "^14.1.1"
   },
   "dependencies": {
-    "rollup": "^4.9.1"
+    "rollup": "^4.9.1",
+    "xypadjs": "github:BcRikko/xypadjs"
   }
 }

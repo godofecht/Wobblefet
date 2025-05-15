@@ -1,16 +1,95 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Trombone</title>
     <script src="./pink-trombone.min.js" type="module"></script>
     <!-- <script src="./script/component.js" type="module"></script> -->
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background-color: #f0f0f0;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Align items to the top */
+        min-height: 100vh;
+        padding-top: 20px; /* Add some padding at the top */
+      }
+      .controls-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        margin-bottom: 20px; /* Space between controls and trombone */
+        display: flex; /* Use flex for horizontal layout of controls */
+        gap: 10px; /* Space between control items */
+        align-items: center;
+      }
+      .controls-container button,
+      .controls-container select {
+        padding: 10px 15px;
+        border: 1px solid #d1d5db; /* gray-300 */
+        border-radius: 6px; /* rounded-md */
+        background-color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s, box-shadow 0.2s;
+      }
+      .controls-container button:hover {
+        background-color: #f3f4f6; /* gray-100 */
+      }
+      .controls-container button:focus,
+      .controls-container select:focus {
+        outline: none;
+        border-color: #60a5fa; /* blue-400 */
+        box-shadow: 0 0 0 3px rgba(96,165,250,.5); /* focus ring */
+      }
+      /* Styles for the main pink-trombone custom element */
+      pink-trombone {
+        display: block; /* Ensure it takes up block space */
+        width: clamp(300px, 90vw, 700px); /* Responsive width: min 300px, 90% of viewport, max 700px */
+        height: clamp(400px, 70vh, 600px); /* Responsive height: min 400px, 70% of viewport, max 600px */
+        margin: 0 auto; /* Center it if body is not already doing so for this element */
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden; /* In case child canvases try to overflow */
+      }
+      /* Styles for buttons inside the Pink Trombone component */
+      #pink-trombone-component-buttons button {
+        padding: 8px 12px;
+        margin: 4px;
+        border: 1px solid #f472b6; /* pink-400 */
+        border-radius: 9999px; /* rounded-full */
+        background-color: #ec4899; /* pink-500 */
+        color: white;
+        font-size: 14px;
+        font-weight: 500; /* medium */
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      #pink-trombone-component-buttons button:hover {
+        background-color: #db2777; /* pink-600 */
+      }
+      /* Container for the Pink Trombone buttons, if needed for layout */
+      #pink-trombone-component-buttons {
+          display: flex;
+          flex-direction: column;
+          padding: 4px; /* p-1 equivalent */
+      }
+    </style>
   </head>
 
   <body>
-    <div style="position: absolute; left: 0; top: 0; z-index: 100">
+    <div class="controls-container">
       <select id="microphoneSelect" hidden>
         <optgroup id="microphoneOptGroup" label="select microphone"></optgroup>
       </select>
-      <button id="toggleMicrophone">enable microphone</button>
-      <button id="debugMicrophone" hidden>listen to mirophone</button>
+      <button id="toggleMicrophone">Enable Microphone</button>
+      <button id="debugMicrophone" hidden>Listen to Microphone</button>
     </div>
 
     <pink-trombone></pink-trombone>

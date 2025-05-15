@@ -182,6 +182,8 @@ class Tract {
       this._updateTractLength(currentTractLength);
     }
 
+    console.log("ggoogogogoo");
+
     this.tongue.diameter = parameterSamples.tongueDiameter;
     this.tongue.index = parameterSamples.tongueIndex;
 

@@ -7,8 +7,7 @@
 class ButtonsUI {
     constructor() {
         this._container = document.createElement("div");
-        this._container.style.display = "flex";
-        this._container.style.flexDirection = "column";
+        this._container.id = "pink-trombone-component-buttons";
 
         this._buttons = {
             start : this._createButton("start"),
@@ -36,12 +35,6 @@ class ButtonsUI {
                 button.id = buttonName;
                 button.value = true;
                 button.innerText = (isParameter? "disable":'') + buttonName;
-                button.style.width = "100%";
-                button.style.flex = 1;
-                button.style.margin = "2px";
-                button.style.borderRadius = "20px";
-                button.style.backgroundColor = "pink";
-                button.style.border = "solid red";
             this._container.appendChild(button);
 
             if(isParameter) {
