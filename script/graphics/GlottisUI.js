@@ -4,7 +4,7 @@
         set actual frequency range
 */
 
-import XYPad from 'xypadjs';
+import XYPad from '../lib/xypad.js'; // Assuming xypad.js will be in script/lib/
 // import { Pointer } from 'xypadjs'; // If Pointer class is exported and needed for type hints
 
 Math.clamp = function(value, min = 0, max = 1) {
